@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.7.33927.210
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MCMPTools", "MCMPTools\MCMPTools.csproj", "{9804A89F-5296-4980-96E7-BAA04FE52AEE}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CurseForge", "..\2022\CurseForge.NET\CurseForge\CurseForge.csproj", "{131DAAE6-01BE-4859-BE95-75D9F6258F16}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "External", "External", "{E545CDC7-1860-441E-AAD8-23279119EFA0}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9804A89F-5296-4980-96E7-BAA04FE52AEE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9804A89F-5296-4980-96E7-BAA04FE52AEE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9804A89F-5296-4980-96E7-BAA04FE52AEE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9804A89F-5296-4980-96E7-BAA04FE52AEE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{131DAAE6-01BE-4859-BE95-75D9F6258F16}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{131DAAE6-01BE-4859-BE95-75D9F6258F16}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{131DAAE6-01BE-4859-BE95-75D9F6258F16}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{131DAAE6-01BE-4859-BE95-75D9F6258F16}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{131DAAE6-01BE-4859-BE95-75D9F6258F16} = {E545CDC7-1860-441E-AAD8-23279119EFA0}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8ABB53BB-D243-4E46-8F30-C1AF4DE03537}
+	EndGlobalSection
+EndGlobal

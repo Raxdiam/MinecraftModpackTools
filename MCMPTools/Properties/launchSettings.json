@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "MCMPTools": {
+      "commandName": "Project",
+      "commandLineArgs": "export",
+      "workingDirectory": "C:\\Users\\raxdi\\AppData\\Roaming\\PrismLauncher\\instances\\ProjectMedieval"
+    }
+  }
+}
