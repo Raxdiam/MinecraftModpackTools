@@ -6,8 +6,7 @@ namespace MCMPTools.Models.Curse;
 public class CurseManifest
 {
     [JsonIgnore]
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
+    private static readonly JsonSerializerOptions JsonOptions = new() {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         WriteIndented = true
     };
