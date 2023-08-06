@@ -1,15 +1,17 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Security.Cryptography;
+using System.Text.RegularExpressions;
+using CurseForgeNET.Models.Files;
 using Tommy;
 
 namespace MCMPTools;
 
-internal partial class Util
+internal static partial class Util
 {
     private static readonly Regex ModFileRegex = CreateModFileRegex();
 
-    public static List<LocalModData> GetIndexData(string instanceDir)
+    public static List<IndexFile> GetIndexData(string instanceDir)
     {
-        var localMods = new List<LocalModData>();
+        var localMods = new List<IndexFile>();
 
         var modsDir = Path.Combine(instanceDir, ".minecraft", "mods");
         var indexDir = Path.Combine(modsDir, ".index");
@@ -31,30 +33,56 @@ internal partial class Util
                 return null;
             }
 
-            if (!updateNode.TryGetNode("curseforge", out var curseForgeNode)) {
-                Console.WriteLine($"CurseForge table is missing in '{tomlName}'");
-                return null;
-            }
-
-            if (!curseForgeNode.TryGetNode("file-id", out var fileIdNode)) {
-                Console.WriteLine($"File ID is missing in '{tomlName}'");
-                return null;
-            }
-
-            if (!curseForgeNode.TryGetNode("project-id", out var projectIdNode)) {
-                Console.WriteLine($"Project ID is missing in '{tomlName}'");
-                return null;
-            }
+            var curseIds = GetCurseIds(updateNode);
+            var modrinthIds = GetModrinthIds(updateNode);
 
             localMods.Add(new() {
                 FileName = fileNameNode.AsString,
                 Disabled = modFiles.Any(f => f.EndsWith(".disabled")),
-                FileId = (uint)fileIdNode.AsInteger,
-                ProjectId = (uint)projectIdNode.AsInteger
+                Curse = curseIds == (-1, -1)
+                    ? null
+                    : new() {
+                        FileId = (uint)curseIds.FileId,
+                        ProjectId = (uint)curseIds.ProjectId,
+                    },
+                Modrinth = modrinthIds == (null, null)
+                    ? null
+                    : new() {
+                        ModId = modrinthIds.ModId,
+                        Version = modrinthIds.Version,
+                    },
             });
         }
 
         return localMods;
+    }
+
+    private static (int FileId, int ProjectId) GetCurseIds(TomlNode updateNode)
+    {
+        if (!updateNode.TryGetNode("curseforge", out var curseForgeNode))
+            return (-1, -1);
+
+        var hasCurseFileId = curseForgeNode.TryGetNode("file-id", out var curseFileIdNode);
+        var hasCurseProjectId = curseForgeNode.TryGetNode("project-id", out var curseProjectIdNode);
+
+        return (
+            hasCurseFileId ? curseFileIdNode.AsInteger : -1,
+            hasCurseProjectId ? curseProjectIdNode.AsInteger : -1
+        );
+    }
+
+    private static (string ModId, string Version) GetModrinthIds(TomlNode updateNode)
+    {
+        if (!updateNode.TryGetNode("modrinth", out var modrinthNode))
+            return (null, null);
+
+        var hasModrinthModId = modrinthNode.TryGetNode("mod-id", out var modrinthModIdNode);
+        var hasModrinthVersion = modrinthNode.TryGetNode("version", out var modrinthVersionNode);
+
+        return (
+            hasModrinthModId ? modrinthModIdNode.AsString : null,
+            hasModrinthVersion ? modrinthVersionNode.AsString : null
+        );
     }
 
     public static bool ValidateInstanceDirectory(string path)
@@ -73,6 +101,24 @@ internal partial class Util
         var normalizedFileName = string.Join(replaceInvalidCharsWith, fileName.Split(invalidFileNameChars, StringSplitOptions.RemoveEmptyEntries)).TrimEnd('.');
         return normalizedFileName;
     }
+
+    public static string GetSha1(string filePath)
+    {
+        using var fs = File.OpenRead(filePath);
+        using var bs = new BufferedStream(fs);
+        using var sha1 = SHA1.Create();
+        var hash = sha1.ComputeHash(bs);
+        return BitConverter.ToString(hash).Replace("-", string.Empty).ToLower();
+    }
+
+    public static DownloaderFile ToDownloaderFile(this CurseFile curseFile) =>
+        new() {
+            Url = curseFile.DownloadUrl,
+            FileName = curseFile.FileName,
+        };
+
+    public static List<DownloaderFile> ToDownloaderList(this IEnumerable<CurseFile> curseFiles) =>
+        curseFiles.Select(ToDownloaderFile).ToList();
 
     [GeneratedRegex(@"\.jar(\.disabled)?$", RegexOptions.Compiled)]
     private static partial Regex CreateModFileRegex();
