@@ -2,7 +2,7 @@
   "profiles": {
     "MCMPTools": {
       "commandName": "Project",
-      "commandLineArgs": "export",
+      "commandLineArgs": "sync -f",
       "workingDirectory": "C:\\Users\\raxdi\\AppData\\Roaming\\PrismLauncher\\instances\\ProjectMedieval"
     }
   }
