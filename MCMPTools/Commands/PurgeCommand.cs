@@ -1,4 +1,6 @@
-﻿namespace MCMPTools.Commands;
+﻿using Spectre.Console;
+
+namespace MCMPTools.Commands;
 
 internal class PurgeCommand : Command
 {
@@ -26,10 +28,13 @@ internal class PurgeCommand : Command
             Console.WriteLine($"- {Path.GetFileName(file)}");
         }
 
-        Console.Write("Purge? (y/n): ");
+        var confirm = AnsiConsole.Confirm("Purge untracked mods?");
+        /*Console.Write("Purge? (y/n): ");
         Console.WriteLine();
         var key = Console.ReadKey();
-        if (key.Key != ConsoleKey.Y) return Task.CompletedTask;
+        if (key.Key != ConsoleKey.Y) return Task.CompletedTask;*/
+
+        if (!confirm) return Task.CompletedTask;
 
         Console.Write($"Purging {untracked.Count} untracked mods... ");
         foreach (var file in untracked) {

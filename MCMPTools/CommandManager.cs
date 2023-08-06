@@ -1,4 +1,5 @@
-﻿namespace MCMPTools;
+﻿
+namespace MCMPTools;
 
 public class CommandManager
 {
@@ -32,5 +33,7 @@ public class CommandManager
         catch (CommandException e) {
             Console.WriteLine(e);
         }
+
+        
     }
 }

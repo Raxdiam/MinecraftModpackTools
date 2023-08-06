@@ -117,8 +117,8 @@ internal class ExportCommand : Command
             Version = _config.PackVersion,
             Author = _config.PackAuthor,
             Files = Util.GetIndexData(instDir).Select(d => new CurseManifestFile {
-                ProjectId = (int)d.ProjectId,
-                FileId = (int)d.FileId,
+                ProjectId = (int)d.Curse.ProjectId,
+                FileId = (int)d.Curse.FileId,
                 Required = !d.Disabled
             }).ToList(),
             Overrides = "overrides"

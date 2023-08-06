@@ -1,20 +1,23 @@
 ﻿using CurseForgeNET;
 using CurseForgeNET.Models.Files;
+using MCMPTools.Rendering;
+using Spectre.Console;
 
 namespace MCMPTools.Commands;
 
 internal class SyncCommand : Command
 {
-    private readonly HttpClient _httpClient;
     private readonly CurseForge _curseClient;
-    private readonly Configuration _config;
 
-    public SyncCommand(HttpClient httpClient, CurseForge curseClient, Configuration config) : base("sync")
+    public SyncCommand(CurseForge curseClient) : base("sync")
     {
-        _httpClient = httpClient;
         _curseClient = curseClient;
     }
 
+    /// <summary>
+    /// Synchronize mods folder with the index (tracking) files
+    /// </summary>
+    /// <param name="args">args[0]: Instance directory.<br/>args[1]: Force sync (don't skip existing files).</param>
     public override async Task RunAsync(string[] args)
     {
         var dir = Directory.GetCurrentDirectory();
@@ -26,42 +29,70 @@ internal class SyncCommand : Command
             throw new CommandException("Invalid instance directory");
         }
 
-        await SyncMods(dir);
+        var force = args.Length > 0 && (args.Contains("--force") || args.Contains("-f"));
+
+        await SyncMods(dir, force);
     }
 
-    private async Task SyncMods(string instanceDir)
+    private async Task SyncMods(string instanceDir, bool force)
     {
         var modsDir = Path.Combine(instanceDir, ".minecraft", "mods");
-        var indexData = Util.GetIndexData(instanceDir);
 
-        //PurgeUntrackedMods(modsDir, indexData);
         await Manager.GetCommad("purge").RunAsync(new[] { instanceDir });
 
-        Console.CursorVisible = false;
-        var i = 1;
-        await foreach (var curseFile in GetCurseFiles(indexData)) {
-            Console.SetCursorPosition(0, Console.CursorTop);
-            Console.Write(new string(' ', Console.WindowWidth));
-            Console.SetCursorPosition(0, Console.CursorTop);
-            Console.Write($"Downloading {i}/{indexData.Count} mods... ");
+        await AnsiConsole.Progress()
+            .HideCompleted(true)
+            .Columns(
+                new TaskDescriptionColumn(),
+                new ProgressBarColumn(),
+                new CountColumn()
+            )
+            .StartAsync(async ctx => {
+                var indexData = Util.GetIndexData(instanceDir);
+                AnsiConsole.MarkupLine($"Tracked mods found: {indexData.Count}");
+                var curseFiles = await GetAllCurseFiles(indexData, ctx);
+                if (!force) {
+                    curseFiles = curseFiles.Where(f => !File.Exists(Path.Combine(modsDir, f.FileName))).ToList();
+                }
+                else {
+                    AnsiConsole.MarkupLine("[yellow]Forcing synchronization. Existing files will be overwritten.[/]");
+                }
 
-            using var res = await _httpClient.GetAsync(curseFile.DownloadUrl);
-            await using var stream = await res.Content.ReadAsStreamAsync();
-            await using var fs = File.Create(Path.Combine(modsDir, curseFile.FileName));
-            await stream.CopyToAsync(fs);
-            i++;
-        }
+                if (curseFiles.Count == 0) {
+                    AnsiConsole.MarkupLine("[green]All mods present or none are tracked. No synchronization needed.[/]");
+                    return;
+                }
 
-        Console.CursorVisible = true;
+                AnsiConsole.MarkupLine($"Mods requiring synchronization: {curseFiles.Count}");
 
-        Console.WriteLine("Done");
+                var task = ctx.AddTask("Downloading mods", maxValue: curseFiles.Count);
+                using var download = new Downloader(modsDir);
+                await download.DownloadFiles(curseFiles.ToDownloaderList(), _ => {
+                    task.Increment(1);
+                });
+                
+                AnsiConsole.MarkupLine("[green]Synchronization completed.[/]");
+            });
     }
 
-    private async IAsyncEnumerable<CurseFile> GetCurseFiles(IEnumerable<LocalModData> indexData)
+    private async Task<List<CurseFile>> GetAllCurseFiles(List<IndexFile> indexData, ProgressContext ctx)
     {
+        var task = ctx.AddTask("Gathering mod data", maxValue: indexData.Count);
+        var curseFiles = new List<CurseFile>();
         foreach (var localModData in indexData) {
-            var curseFile = (await _curseClient.GetModFile(localModData.ProjectId, localModData.FileId)).Data;
-            yield return curseFile;
+            if (localModData.Curse != null && (localModData.Curse.ProjectId > 1 || localModData.Curse.FileId > 1)) {
+                var curseFile = (await _curseClient.GetModFile(localModData.Curse.ProjectId, localModData.Curse.FileId)).Data;
+                curseFiles.Add(curseFile);
+            }
+
+            if (localModData.Modrinth != null) {
+                //TODO: Add modrinth support
+            }
+            
+            task.Increment(1);
         }
+
+        return curseFiles;
     }
+    
 }
