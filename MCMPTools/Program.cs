@@ -1,7 +1,5 @@
 ﻿using CurseForgeNET;
-using CurseForgeNET.Models.Files;
 using MCMPTools.Commands;
-using Tommy;
 
 namespace MCMPTools;
 
@@ -19,7 +17,7 @@ internal class Program
 
         var commandManager = new CommandManager()
             .RegisterCommand(new PurgeCommand())
-            .RegisterCommand(new SyncCommand(Http, CurseClient, Config))
+            .RegisterCommand(new SyncCommand(CurseClient))
             .RegisterCommand(new ExportCommand(Config));
         await commandManager.RunAsync(args);
     }
